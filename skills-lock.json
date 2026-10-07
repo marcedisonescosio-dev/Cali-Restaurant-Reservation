@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "anti-ui-slop": {
+      "source": "discountry/ritmex-skills",
+      "sourceType": "github",
+      "skillPath": "skills/anti-ui-slop/SKILL.md",
+      "computedHash": "87dd1ae0723c846f95bdc7495989653e52a08e1262259b239aae494e5d7ddc76"
+    }
+  }
+}
