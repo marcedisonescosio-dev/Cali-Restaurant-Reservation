@@ -107,6 +107,14 @@ const seedDatabase = async () => {
           availability: true
         },
         {
+          categoryId: starters._id,
+          name: 'Sizzling Pork Sisig',
+          description: 'A famous Kapampangan delicacy. Crispy, savory chopped pork served on a sizzling cast-iron platter, topped with fresh chili, onions, and a crackling egg.',
+          price: 12.5,
+          image: '',
+          availability: true
+        },
+        {
           categoryId: mains._id,
           name: 'Prime Ribeye Steak',
           description: '12oz grilled USDA prime ribeye with rosemary garlic butter & roasted asparagus',

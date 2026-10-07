@@ -1140,15 +1140,56 @@ const Admin = () => {
 
                   <div>
                     <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">
-                      Photo URL (Unsplash or direct image)
+                      Photo (URL or Upload — saved in database)
                     </label>
                     <input
-                      type="url"
+                      type="text"
                       value={menuFormData.image}
                       onChange={(e) => setMenuFormData({ ...menuFormData, image: e.target.value })}
-                      placeholder="https://images.unsplash.com/..."
+                      placeholder="https://images.unsplash.com/... or upload below"
                       className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-amber-500"
                     />
+                    <div className="flex items-center gap-3 mt-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) {
+                            alert('Image too large (max 2MB). Please compress or use a URL.');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setMenuFormData({ ...menuFormData, image: reader.result });
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                        className="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-amber-400 hover:file:bg-slate-700 file:cursor-pointer cursor-pointer"
+                      />
+                      {menuFormData.image && (
+                        <button
+                          type="button"
+                          onClick={() => setMenuFormData({ ...menuFormData, image: '' })}
+                          className="text-[11px] text-rose-400 hover:text-rose-300 shrink-0"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    {menuFormData.image && (
+                      <div className="mt-2 h-32 w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                        <img
+                          src={menuFormData.image}
+                          alt="Dish preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Upload stores the photo as a data-URL string in MongoDB (same `image` field). URLs still work.
+                    </p>
                   </div>
 
                   <div>
@@ -1270,7 +1311,7 @@ const Admin = () => {
           {/* Host Stand Run Sheet Modal */}
           {isRunSheetModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm overflow-y-auto">
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 w-full max-w-4xl shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 w-full max-w-4xl shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
                   <div>
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
@@ -1285,7 +1326,7 @@ const Admin = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => window.print()}
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition-colors shadow-md shadow-amber-500/20"
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition-colors shadow-md"
                     >
                       <Printer className="w-4 h-4" />
                       Print Run Sheet

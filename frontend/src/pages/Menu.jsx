@@ -64,7 +64,7 @@ const Menu = () => {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 mb-10 backdrop-blur-md space-y-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-10 space-y-4">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           {/* Category Filter Pills */}
           <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
@@ -72,7 +72,7 @@ const Menu = () => {
               onClick={() => setSelectedCategory('all')}
               className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
                 selectedCategory === 'all'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
                   : 'bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-800'
               }`}
             >
@@ -84,7 +84,7 @@ const Menu = () => {
                 onClick={() => setSelectedCategory(cat._id)}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
                   selectedCategory === cat._id
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                    ? 'bg-amber-500 text-slate-950 shadow-md'
                     : 'bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-800'
                 }`}
               >
@@ -160,13 +160,13 @@ const Menu = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
 
                 {/* Price Badge */}
-                <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-slate-900/85 backdrop-blur-md border border-slate-700 text-amber-400 font-bold text-sm shadow-lg">
+                <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-amber-400 font-bold text-sm shadow-lg">
                   ${item.price.toFixed(2)}
                 </div>
 
                 {/* Category Pill */}
                 {item.categoryId?.name && (
-                  <div className="absolute bottom-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900/80 backdrop-blur-md border border-slate-800 text-[11px] font-medium text-slate-300">
+                  <div className="absolute bottom-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-medium text-slate-300">
                     <Tag className="w-3 h-3 text-amber-400" />
                     <span>{item.categoryId.name}</span>
                   </div>

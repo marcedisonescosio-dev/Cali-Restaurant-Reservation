@@ -134,7 +134,7 @@ const Profile = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Personal Details Card */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-6 text-white font-semibold text-lg border-b border-slate-800 pb-3">
             <User className="w-5 h-5 text-amber-500" />
             <h2>Personal Information</h2>
@@ -213,7 +213,7 @@ const Profile = () => {
         </div>
 
         {/* Change Password Card */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-6 text-white font-semibold text-lg border-b border-slate-800 pb-3">
             <KeyRound className="w-5 h-5 text-amber-500" />
             <h2>Security & Password</h2>
@@ -297,7 +297,7 @@ const Profile = () => {
       </div>
 
       {/* User Reservations History Section */}
-      <div className="mt-8 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md">
+      <div className="mt-8 bg-slate-900 border border-slate-800 rounded-2xl p-6">
         <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-amber-500" />

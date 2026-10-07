@@ -49,18 +49,18 @@ const Home = () => {
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.15]">
                 Fine Cuisine, <br />
                 <span className="text-amber-300">
-                  Unforgettable Moments
+                  Mangaldan Grill & Sisig
                 </span>
               </h1>
 
               <p className="text-lg text-slate-300 max-w-xl leading-relaxed">
-                Welcome to Cali Reserve. Charcoal-grilled cuts, seasonal produce, and a table held under your name — booked in under two minutes.
+                Welcome to Mangaldan Resto. Kapampangan-style Sizzling Pork Sisig, charcoal-grilled cuts, and a table held under your name — booked in under two minutes.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-2">
                 <Link
                   to="/reserve"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-colors"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-colors shadow-lg shadow-amber-500/20"
                 >
                   <Calendar className="w-5 h-5" />
                   Reserve a Table
@@ -94,14 +94,14 @@ const Home = () => {
 
             {/* Hero Visual Card */}
             <div className="relative">
-              <div className="relative rounded-2xl overflow-hidden border border-slate-800 shadow-2xl shadow-amber-500/10">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-800 shadow-xl">
                 <img
                   src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&auto=format&fit=crop&q=80"
                   alt="Dining room at Cali Reserve with set tables"
                   className="w-full h-[460px] object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6 p-4 rounded-xl bg-slate-900/85 backdrop-blur-md border border-slate-700/60 flex items-center justify-between">
+                <div className="absolute bottom-6 left-6 right-6 p-4 rounded-xl bg-slate-900 border border-slate-700/60 flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Tonight's Highlight</p>
                     <p className="text-sm font-bold text-white">Prime Ribeye Steak & Saffron Risotto</p>
@@ -200,10 +200,10 @@ const Home = () => {
             <div className="p-8 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
               <div className="flex items-center gap-3">
                 <Utensils className="w-5 h-5 text-amber-400 shrink-0" />
-                <h3 className="text-xl font-bold text-white">Culinary Artistry</h3>
+                <h3 className="text-xl font-bold text-white">Kapampangan Charcoal Grill</h3>
               </div>
               <p className="text-sm text-slate-400 leading-relaxed">
-                Prime-cut meats, wild-caught seafood, and farm produce — cooked over charcoal, listed by origin on the daily menu.
+                Sizzling Pork Sisig on cast iron with chili, onions and egg, plus charcoal-grilled cuts and seasonal produce from local markets.
               </p>
             </div>
 

@@ -214,7 +214,7 @@ const Reserve = () => {
             onClick={() => setActiveTab('book')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
               activeTab === 'book'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                ? 'bg-amber-500 text-slate-950 shadow-md'
                 : 'text-slate-300 hover:text-white'
             }`}
           >
@@ -227,7 +227,7 @@ const Reserve = () => {
               onClick={() => setActiveTab('my-bookings')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                 activeTab === 'my-bookings'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -259,7 +259,7 @@ const Reserve = () => {
           <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
             <button
               onClick={() => setViewingReceiptReservation(bookingSuccess)}
-              className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors shadow-md shadow-amber-500/20"
+              className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors shadow-md"
             >
               <Ticket className="w-3.5 h-3.5" />
               Digital Ticket & Calendar
@@ -288,7 +288,7 @@ const Reserve = () => {
         <div className="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Left Column: Filter and Slot Selection Form */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-md shadow-xl space-y-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
               <h2 className="text-xl font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
                 <CalendarIcon className="w-5 h-5 text-amber-500" />
                 Select Details
@@ -330,7 +330,7 @@ const Reserve = () => {
                       onClick={() => setGuestCount(num)}
                       className={`py-2 rounded-xl text-sm font-semibold transition-all ${
                         guestCount === num
-                          ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                          ? 'bg-amber-500 text-slate-950 shadow-md'
                           : 'bg-slate-950/60 border border-slate-800 text-slate-300 hover:border-slate-600'
                       }`}
                     >
@@ -353,7 +353,7 @@ const Reserve = () => {
                       onClick={() => setSelectedTime(slot)}
                       className={`py-2 px-1 text-xs font-semibold rounded-xl transition-all ${
                         selectedTime === slot
-                          ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold'
+                          ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
                           : 'bg-slate-950/60 border border-slate-800 text-slate-300 hover:border-slate-600'
                       }`}
                     >
@@ -406,7 +406,7 @@ const Reserve = () => {
 
           {/* Right Column: Available Tables Grid */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-md shadow-xl">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-6">
                 <div>
                   <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -426,7 +426,7 @@ const Reserve = () => {
                       onClick={() => setViewMode('map')}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         viewMode === 'map'
-                          ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
+                          ? 'bg-amber-500 text-slate-950 font-bold shadow-md'
                           : 'text-slate-400 hover:text-white'
                       }`}
                     >
@@ -438,7 +438,7 @@ const Reserve = () => {
                       onClick={() => setViewMode('cards')}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         viewMode === 'cards'
-                          ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
+                          ? 'bg-amber-500 text-slate-950 font-bold shadow-md'
                           : 'text-slate-400 hover:text-white'
                       }`}
                     >
@@ -487,7 +487,7 @@ const Reserve = () => {
                         onClick={() => setSelectedTable(table)}
                         className={`cursor-pointer rounded-2xl p-5 border transition-all duration-200 relative ${
                           isSelected
-                            ? 'bg-amber-500/10 border-amber-500 shadow-lg shadow-amber-500/10'
+                            ? 'bg-amber-500/10 border-amber-500 shadow-lg'
                             : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-950/80'
                         }`}
                       >
@@ -579,7 +579,7 @@ const Reserve = () => {
               </p>
               <button
                 onClick={() => setActiveTab('book')}
-                className="mt-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm transition-colors shadow-md shadow-amber-500/20"
+                className="mt-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm transition-colors shadow-md"
               >
                 Book Your First Table
               </button>
@@ -591,7 +591,7 @@ const Reserve = () => {
                 return (
                   <div
                     key={res._id}
-                    className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-md shadow-xl flex flex-col justify-between space-y-4"
+                    className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-4">
