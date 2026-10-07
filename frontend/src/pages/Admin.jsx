@@ -1007,7 +1007,7 @@ const Admin = () => {
                       <div className="flex items-start justify-between gap-2">
                         <h4 className="text-base font-bold text-white">{item.name}</h4>
                         <span className="text-amber-400 font-bold text-sm shrink-0">
-                          ${Number(item.price).toFixed(2)}
+                          ₱{Number(item.price).toFixed(2)}
                         </span>
                       </div>
                       <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
@@ -1121,7 +1121,7 @@ const Admin = () => {
 
                     <div>
                       <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">
-                        Price ($ USD)
+                        Price (₱ PHP)
                       </label>
                       <input
                         type="number"
@@ -1132,7 +1132,7 @@ const Admin = () => {
                         onChange={(e) =>
                           setMenuFormData({ ...menuFormData, price: e.target.value })
                         }
-                        placeholder="24.99"
+                        placeholder="299.00"
                         className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-amber-500"
                       />
                     </div>
@@ -1356,6 +1356,7 @@ const Admin = () => {
                           <th className="px-3 py-3">Party</th>
                           <th className="px-4 py-3">Contact</th>
                           <th className="px-3 py-3">Status</th>
+                          <th className="px-4 py-3">Pre-Orders</th>
                           <th className="px-4 py-3">Notes & Requests</th>
                         </tr>
                       </thead>
@@ -1381,6 +1382,22 @@ const Admin = () => {
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${getStatusBadge(res.status)}`}>
                                   {res.status}
                                 </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                {res.preOrders && res.preOrders.length > 0 ? (
+                                  <ul className="space-y-1">
+                                    {res.preOrders.map((po, idx) => (
+                                      <li key={po._id || idx} className="text-slate-200 font-semibold whitespace-nowrap">
+                                        {po.quantity}x {po.name || po.menuItem?.name || 'Dish'}
+                                        <span className="text-amber-400 font-bold ml-1">
+                                          ₱{Number(po.price ?? po.menuItem?.price ?? 0).toFixed(2)}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <span className="text-slate-500">—</span>
+                                )}
                               </td>
                               <td className="px-4 py-3 text-slate-400 italic">
                                 {res.specialRequest || '—'}

@@ -7,3 +7,45 @@
     @apply bg-slate-900 text-slate-100 antialiased font-sans selection:bg-amber-500 selection:text-white min-h-screen flex flex-col;
   }
 }
+
+/* Light theme (pearl / soft white): remap the core dark slate surfaces.
+   Dark remains the default and is untouched. `.light` is set on <html>
+   by ThemeContext. Substring selectors also catch opacity variants
+   (e.g. bg-slate-900/80, border-slate-800/60). */
+.light body {
+  background-color: #f6f3ec !important;
+  color: #1c1917 !important;
+}
+.light [class*="bg-slate-950"] {
+  background-color: #fdfcf8 !important;
+}
+.light [class*="bg-slate-900"] {
+  background-color: #fdfcf8 !important;
+}
+.light [class*="bg-slate-800"] {
+  background-color: #ece6d8 !important;
+}
+.light [class*="text-white"] {
+  color: #1c1917 !important;
+}
+.light [class*="text-slate-100"],
+.light [class*="text-slate-200"] {
+  color: #1c1917 !important;
+}
+.light [class*="text-slate-300"],
+.light [class*="text-slate-400"] {
+  color: #57534e !important;
+}
+.light [class*="text-slate-500"] {
+  color: #78716c !important;
+}
+.light [class*="border-slate-800"],
+.light [class*="border-slate-700"] {
+  border-color: #e3dccb !important;
+}
+.light [class*="divide-slate-800"] > * + * {
+  border-color: #e3dccb !important;
+}
+.light [class*="placeholder-slate-"]::placeholder {
+  color: #a8a29e !important;
+}

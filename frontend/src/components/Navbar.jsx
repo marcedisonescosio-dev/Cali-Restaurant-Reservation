@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UtensilsCrossed, Calendar, BookOpen, LogIn, Menu, X, ShieldAlert, LogOut } from 'lucide-react';
+import { UtensilsCrossed, Calendar, BookOpen, LogIn, Menu, X, ShieldAlert, LogOut, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import LogoutConfirmModal from './LogoutConfirmModal';
 
 // Desktop nav link with active background state
 const NavLink = ({ to, children, icon, adminStyle }) => {
@@ -65,10 +67,14 @@ const MobileNavLink = ({ to, children, onClick, adminStyle }) => {
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    setShowLogoutConfirm(false);
+    setIsOpen(false);
     logout();
     navigate('/login');
   };
@@ -102,6 +108,15 @@ const Navbar = () => {
 
           {/* Desktop Right Side / Auth actions */}
           <div className="hidden md:flex items-center space-x-3">
+            <button
+              onClick={toggleTheme}
+              title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:text-amber-300 text-xs font-bold transition-colors"
+            >
+              {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              {theme === 'light' ? 'Dark' : 'Light'}
+            </button>
             {isAuthenticated ? (
               <div className="flex items-center space-x-3">
                 <Link
@@ -114,7 +129,7 @@ const Navbar = () => {
                   <span>{user?.name || 'Account'}</span>
                 </Link>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => setShowLogoutConfirm(true)}
                   className="flex items-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 py-1.5 px-3 rounded-lg hover:bg-rose-500/10 border border-rose-500/20 transition-colors"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -141,7 +156,15 @@ const Navbar = () => {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center gap-1">
+            <button
+              onClick={toggleTheme}
+              title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:text-amber-300 focus:outline-none transition-colors"
+            >
+              {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </button>
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none"
@@ -169,8 +192,7 @@ const Navbar = () => {
                 </MobileNavLink>
                 <button
                   onClick={() => {
-                    handleLogout();
-                    setIsOpen(false);
+                    setShowLogoutConfirm(true);
                   }}
                   className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-rose-400 hover:bg-rose-500/10"
                 >
@@ -197,6 +219,12 @@ const Navbar = () => {
             )}
           </div>
         </div>
+      )}
+      {showLogoutConfirm && (
+        <LogoutConfirmModal
+          onConfirm={handleLogout}
+          onCancel={() => setShowLogoutConfirm(false)}
+        />
       )}
     </header>
   );

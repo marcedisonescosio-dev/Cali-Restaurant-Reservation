@@ -34,6 +34,21 @@ const reservationSchema = new mongoose.Schema(
       type: String,
       default: '',
       trim: true
+    },
+    preOrders: {
+      type: [
+        {
+          menuItem: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'MenuItem',
+            required: true
+          },
+          name: { type: String, default: '', trim: true },
+          price: { type: Number, default: 0, min: 0 },
+          quantity: { type: Number, required: true, min: 1, max: 20 }
+        }
+      ],
+      default: []
     }
   },
   {

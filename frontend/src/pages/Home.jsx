@@ -5,10 +5,7 @@ import {
   Calendar,
   Utensils,
   Star,
-  ShieldCheck,
   ArrowRight,
-  Clock,
-  Users,
   Award,
   Wine,
   Quote
@@ -73,22 +70,6 @@ const Home = () => {
                   <Utensils className="w-5 h-5 text-amber-400" />
                   Explore Menu
                 </Link>
-              </div>
-
-              {/* Quick Perks */}
-              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-800/80">
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Zero Double Booking</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>Instant Verification</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <Users className="w-4 h-4 text-sky-400 shrink-0" />
-                  <span>Up to 10 Guests</span>
-                </div>
               </div>
             </div>
 
@@ -158,7 +139,7 @@ const Home = () => {
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-slate-900/90 text-amber-400 font-bold text-sm border border-slate-700">
-                    ${dish.price.toFixed(2)}
+                    ₱{dish.price.toFixed(2)}
                   </div>
                 </div>
 

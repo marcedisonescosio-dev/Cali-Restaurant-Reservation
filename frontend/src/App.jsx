@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -15,6 +16,7 @@ import Admin from './pages/Admin';
 
 function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <div className="min-h-screen flex flex-col bg-slate-900 text-slate-100">
         <Navbar />
@@ -46,6 +48,7 @@ function App() {
         <Footer />
       </div>
     </AuthProvider>
+    </ThemeProvider>
   );
 }
 

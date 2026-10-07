@@ -41,6 +41,11 @@ const Reserve = () => {
   const [selectedTable, setSelectedTable] = useState(null);
   const [specialRequest, setSpecialRequest] = useState('');
 
+  // Pre-order food state (optional)
+  const [menuItems, setMenuItems] = useState([]);
+  const [showPreOrder, setShowPreOrder] = useState(false);
+  const [preOrderQty, setPreOrderQty] = useState({});
+
   // Tables state
   const [tables, setTables] = useState([]);
   const [allTables, setAllTables] = useState([]);
@@ -56,6 +61,19 @@ const Reserve = () => {
   const [cancellingId, setCancellingId] = useState(null);
   const [cancelMessage, setCancelMessage] = useState({ type: '', text: '' });
   const [viewingReceiptReservation, setViewingReceiptReservation] = useState(null);
+
+  // Fetch menu once for optional pre-orders
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        const res = await api.get('/menu');
+        setMenuItems((res.data || []).filter((m) => m.availability !== false));
+      } catch (err) {
+        console.error('Failed to load menu for pre-orders:', err.message);
+      }
+    };
+    fetchMenu();
+  }, []);
 
   // Fetch all tables once for floor plan layout
   useEffect(() => {
@@ -136,18 +154,26 @@ const Reserve = () => {
 
     try {
       setBookingLoading(true);
+      const preOrders = showPreOrder
+        ? Object.entries(preOrderQty)
+            .filter(([, qty]) => qty > 0)
+            .map(([menuItem, quantity]) => ({ menuItem, quantity }))
+        : [];
       const res = await api.post('/reservations', {
         tableId: selectedTable._id,
         reservationDate: selectedDate,
         reservationTime: selectedTime,
         guestCount,
-        specialRequest
+        specialRequest,
+        preOrders
       });
 
       setBookingSuccess(res.data);
       setViewingReceiptReservation(res.data);
       setSelectedTable(null);
       setSpecialRequest('');
+      setPreOrderQty({});
+      setShowPreOrder(false);
       // Refresh available tables
       fetchAvailableTables();
     } catch (err) {
@@ -375,6 +401,76 @@ const Reserve = () => {
                   placeholder="E.g., Window view, anniversary celebration, quiet area, high chair..."
                   className="w-full px-4 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-amber-500 placeholder-slate-600"
                 ></textarea>
+              </div>
+
+              {/* Pre-order toggle */}
+              <div className="border border-slate-800 rounded-xl p-4 space-y-3">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showPreOrder}
+                    onChange={(e) => setShowPreOrder(e.target.checked)}
+                    className="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 cursor-pointer"
+                  />
+                  <span className="text-sm font-semibold text-white">
+                    Pre-order food for your table <span className="text-slate-400 font-normal">(Optional)</span>
+                  </span>
+                </label>
+                <p className="text-xs text-slate-400">
+                  Ready on your table when you arrive. Pay on site.
+                </p>
+
+                {showPreOrder && (
+                  <div className="space-y-2 max-h-64 overflow-y-auto pt-1">
+                    {menuItems.length === 0 ? (
+                      <p className="text-xs text-slate-500">Menu unavailable right now. You can still book the table.</p>
+                    ) : (
+                      menuItems.map((dish) => {
+                        const qty = preOrderQty[dish._id] || 0;
+                        return (
+                          <div
+                            key={dish._id}
+                            className="flex items-center justify-between gap-3 bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-white truncate">{dish.name}</p>
+                              <p className="text-xs text-amber-400 font-bold">₱{Number(dish.price).toFixed(2)}</p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setPreOrderQty((prev) => ({
+                                    ...prev,
+                                    [dish._id]: Math.max(0, (prev[dish._id] || 0) - 1)
+                                  }))
+                                }
+                                className="w-7 h-7 rounded-lg bg-slate-800 text-slate-200 text-sm font-bold hover:bg-slate-700"
+                                aria-label={`Remove one ${dish.name}`}
+                              >
+                                −
+                              </button>
+                              <span className="w-6 text-center text-sm font-bold text-white">{qty}</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setPreOrderQty((prev) => ({
+                                    ...prev,
+                                    [dish._id]: Math.min(20, (prev[dish._id] || 0) + 1)
+                                  }))
+                                }
+                                className="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 text-sm font-bold hover:bg-amber-400"
+                                aria-label={`Add one ${dish.name}`}
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Confirmation CTA button */}

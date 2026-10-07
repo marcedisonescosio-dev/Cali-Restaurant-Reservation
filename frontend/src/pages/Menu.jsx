@@ -161,7 +161,7 @@ const Menu = () => {
 
                 {/* Price Badge */}
                 <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-amber-400 font-bold text-sm shadow-lg">
-                  ${item.price.toFixed(2)}
+                  ₱{item.price.toFixed(2)}
                 </div>
 
                 {/* Category Pill */}

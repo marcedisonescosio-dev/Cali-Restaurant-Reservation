@@ -1,12 +1,13 @@
 const Reservation = require('../models/Reservation');
 const Table = require('../models/Table');
+const MenuItem = require('../models/MenuItem');
 
 // @desc    Create a new reservation (with strict double-booking check)
 // @route   POST /api/reservations
 // @access  Private
 const createReservation = async (req, res) => {
   try {
-    const { tableId, reservationDate, reservationTime, guestCount, specialRequest } = req.body;
+    const { tableId, reservationDate, reservationTime, guestCount, specialRequest, preOrders } = req.body;
 
     // 1. Basic validation
     if (!tableId || !reservationDate || !reservationTime || !guestCount) {
@@ -54,7 +55,37 @@ const createReservation = async (req, res) => {
       });
     }
 
-    // 5. Create Reservation
+    // 5. Validate + snapshot pre-orders (optional)
+    let preOrderDocs = [];
+    if (preOrders !== undefined) {
+      if (!Array.isArray(preOrders)) {
+        return res.status(400).json({ message: 'preOrders must be an array' });
+      }
+      if (preOrders.length > 20) {
+        return res.status(400).json({ message: 'Maximum 20 pre-ordered items per reservation' });
+      }
+      for (const entry of preOrders) {
+        const qty = parseInt(entry?.quantity, 10);
+        if (!entry?.menuItem || isNaN(qty) || qty < 1 || qty > 20) {
+          return res.status(400).json({ message: 'Each pre-order needs a valid menuItem and quantity (1-20)' });
+        }
+        const dish = await MenuItem.findById(entry.menuItem).select('name price availability');
+        if (!dish) {
+          return res.status(404).json({ message: 'One of the selected dishes does not exist' });
+        }
+        if (dish.availability === false) {
+          return res.status(400).json({ message: `Sorry, '${dish.name}' is currently sold out` });
+        }
+        preOrderDocs.push({
+          menuItem: dish._id,
+          name: dish.name,
+          price: dish.price,
+          quantity: qty
+        });
+      }
+    }
+
+    // 6. Create Reservation
     const reservation = await Reservation.create({
       userId: req.user._id,
       tableId,
@@ -62,12 +93,14 @@ const createReservation = async (req, res) => {
       reservationTime: reservationTime.trim(),
       guestCount: guests,
       specialRequest: specialRequest ? specialRequest.trim() : '',
+      preOrders: preOrderDocs,
       status: 'Pending'
     });
 
     const populated = await reservation.populate([
       { path: 'tableId', select: 'tableNumber capacity' },
-      { path: 'userId', select: 'name email phone' }
+      { path: 'userId', select: 'name email phone' },
+      { path: 'preOrders.menuItem', select: 'name price' }
     ]);
 
     res.status(201).json(populated);
@@ -84,6 +117,7 @@ const getMyReservations = async (req, res) => {
   try {
     const reservations = await Reservation.find({ userId: req.user._id })
       .populate('tableId', 'tableNumber capacity status')
+      .populate('preOrders.menuItem', 'name price')
       .sort({ reservationDate: -1, reservationTime: -1 });
 
     res.status(200).json(reservations);
@@ -136,7 +170,8 @@ const getReservationById = async (req, res) => {
   try {
     const reservation = await Reservation.findById(req.params.id)
       .populate('tableId', 'tableNumber capacity')
-      .populate('userId', 'name email phone');
+      .populate('userId', 'name email phone')
+      .populate('preOrders.menuItem', 'name price');
 
     if (!reservation) {
       return res.status(404).json({ message: 'Reservation not found' });
@@ -215,6 +250,7 @@ const getAllReservationsAdmin = async (req, res) => {
     const reservations = await Reservation.find(filter)
       .populate('userId', 'name email phone')
       .populate('tableId', 'tableNumber capacity')
+      .populate('preOrders.menuItem', 'name price')
       .sort({ reservationDate: -1, reservationTime: -1 });
 
     res.status(200).json(reservations);
