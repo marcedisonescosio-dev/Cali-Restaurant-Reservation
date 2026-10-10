@@ -12,7 +12,7 @@ const Footer = () => {
               <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center">
                 <UtensilsCrossed className="w-4 h-4 text-slate-900" />
               </div>
-              <span className="text-lg font-bold">Cali Reserve</span>
+              <span className="text-lg font-bold">SaloTable</span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
               Experience artisanal gourmet cuisine in an intimate setting. Effortless table reservations tailored for every occasion.
@@ -76,7 +76,7 @@ const Footer = () => {
         </div>
 
         <div className="mt-12 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} Cali Reserve. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} SaloTable. All rights reserved.</p>
           <p className="flex items-center gap-1 mt-2 sm:mt-0">
             Crafted with <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> for Restaurant Reservation System
           </p>

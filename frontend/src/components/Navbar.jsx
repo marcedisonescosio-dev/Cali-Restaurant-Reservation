@@ -90,7 +90,7 @@ const Navbar = () => {
             </div>
             <div>
               <span className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
-                Cali Reserve
+                SaloTable
               </span>
               <p className="text-[10px] text-slate-400 tracking-wider uppercase font-medium">Fine Dining & Reservations</p>
             </div>

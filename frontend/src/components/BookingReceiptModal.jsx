@@ -63,20 +63,20 @@ const BookingReceiptModal = ({ reservation, isOpen, onClose }) => {
       const icsContent = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
-        'PRODID:-//Cali Reserve//Reservation System//EN',
+        'PRODID:-//SaloTable//Reservation System//EN',
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
         'BEGIN:VEVENT',
-        `SUMMARY:Dinner at Cali Reserve (Table #${tableNumber})`,
-        `DESCRIPTION:Reservation for party of ${guests} guests at Cali Reserve.\\nBooking Ref: ${bookingRef}\\nSpecial Requests: ${specialRequest}\\nAddress: 452 Gourmet Promenade, Culinary District`,
-        'LOCATION:Cali Reserve, 452 Gourmet Promenade',
+        `SUMMARY:Dinner at SaloTable (Table #${tableNumber})`,
+        `DESCRIPTION:Reservation for party of ${guests} guests at SaloTable.\\nBooking Ref: ${bookingRef}\\nSpecial Requests: ${specialRequest}\\nAddress: 452 Gourmet Promenade, Culinary District`,
+        'LOCATION:SaloTable, 452 Gourmet Promenade',
         `DTSTART:${formatICSDate(startDate)}`,
         `DTEND:${formatICSDate(endDate)}`,
         'STATUS:CONFIRMED',
         'BEGIN:VALARM',
         'TRIGGER:-PT1H',
         'ACTION:DISPLAY',
-        'DESCRIPTION:Upcoming Dinner at Cali Reserve in 1 hour',
+        'DESCRIPTION:Upcoming Dinner at SaloTable in 1 hour',
         'END:VALARM',
         'END:VEVENT',
         'END:VCALENDAR'
@@ -159,7 +159,7 @@ const BookingReceiptModal = ({ reservation, isOpen, onClose }) => {
                     <UtensilsCrossed className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white tracking-wide">Cali Reserve</h3>
+                    <h3 className="text-sm font-bold text-white tracking-wide">SaloTable</h3>
                     <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">
                       Table Reservation Pass
                     </p>
@@ -305,15 +305,15 @@ const BookingReceiptModal = ({ reservation, isOpen, onClose }) => {
 
             <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6 space-y-4 text-xs font-sans text-slate-300 shadow-inner">
               <div className="border-b border-slate-800 pb-3 space-y-1">
-                <div><strong className="text-slate-400">From:</strong> reservations@lareservebistro.com</div>
+                <div><strong className="text-slate-400">From:</strong> reservations@salotable.com</div>
                 <div><strong className="text-slate-400">To:</strong> {userEmail}</div>
-                <div><strong className="text-slate-400">Subject:</strong> Your Reservation is Confirmed - Cali Reserve ({bookingRef})</div>
+                <div><strong className="text-slate-400">Subject:</strong> Your Reservation is Confirmed - SaloTable ({bookingRef})</div>
               </div>
 
               <div className="space-y-3 pt-2 leading-relaxed">
                 <p>Dear {userName},</p>
                 <p>
-                  Thank you for choosing <strong>Cali Reserve</strong>. Your table reservation is confirmed below.
+                  Thank you for choosing <strong>SaloTable</strong>. Your table reservation is confirmed below.
                 </p>
 
                 <div className="p-4 bg-slate-900/90 rounded-xl border border-amber-500/20 space-y-2">
@@ -341,7 +341,7 @@ const BookingReceiptModal = ({ reservation, isOpen, onClose }) => {
                   <strong>Dress Code:</strong> Smart Elegant. Tables are held for up to 15 minutes past reserved time.
                 </p>
 
-                <p className="pt-2">Warm regards,<br /><strong>The Culinary Team at Cali Reserve</strong></p>
+                <p className="pt-2">Warm regards,<br /><strong>The Culinary Team at SaloTable</strong></p>
               </div>
             </div>
 
@@ -373,7 +373,7 @@ const BookingReceiptModal = ({ reservation, isOpen, onClose }) => {
                 <div className="bg-amber-500 text-slate-950 p-4 rounded-2xl rounded-tl-none text-xs leading-relaxed font-medium">
                   <p className="font-bold flex items-center gap-1.5 mb-1">
                     <UtensilsCrossed className="w-3.5 h-3.5" />
-                    Cali Reserve
+                    SaloTable
                   </p>
                   <p>
                     Hi {userName.split(' ')[0]}! Your table #{tableNumber} for {guests} {guests === 1 ? 'guest' : 'guests'} is confirmed on {resDate} at {resTime}. Ref: {bookingRef}.

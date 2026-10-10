@@ -51,7 +51,7 @@ const Home = () => {
               </h1>
 
               <p className="text-lg text-slate-300 max-w-xl leading-relaxed">
-                Welcome to Mangaldan Resto. Kapampangan-style Sizzling Pork Sisig, charcoal-grilled cuts, and a table held under your name — booked in under two minutes.
+                Welcome to SaloTable. Kapampangan-style Sizzling Pork Sisig, charcoal-grilled cuts, and a table held under your name — booked in under two minutes.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-2">
@@ -78,7 +78,7 @@ const Home = () => {
               <div className="relative rounded-2xl overflow-hidden border border-slate-800 shadow-xl">
                 <img
                   src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&auto=format&fit=crop&q=80"
-                  alt="Dining room at Cali Reserve with set tables"
+                  alt="Dining room at SaloTable with set tables"
                   className="w-full h-[460px] object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
@@ -171,7 +171,7 @@ const Home = () => {
       <section className="bg-slate-950/60 border-y border-slate-800/80 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl font-extrabold text-white tracking-tight">The Cali Reserve Experience</h2>
+            <h2 className="text-3xl font-extrabold text-white tracking-tight">The SaloTable Experience</h2>
             <p className="text-sm text-slate-400 mt-2">
               Three reasons regulars book here: the grill, the cellar, and a table that is actually held.
             </p>
