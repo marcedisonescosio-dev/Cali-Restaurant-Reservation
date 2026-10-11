@@ -23,7 +23,10 @@ const BookingReceiptModal = ({ reservation, isOpen, onClose }) => {
 
   if (!isOpen || !reservation) return null;
 
-  const tableNumber = reservation.tableId?.tableNumber || reservation.tableNumber || 'N/A';
+  const tableNumber = reservation.tableId?.displayTableNumber
+    || reservation.tableId?.tableNumber
+    || reservation.tableNumber
+    || 'N/A';
   const guests = reservation.guestCount || 1;
   const resDate = reservation.reservationDate || '';
   const resTime = reservation.reservationTime || '';
@@ -32,6 +35,7 @@ const BookingReceiptModal = ({ reservation, isOpen, onClose }) => {
   const userEmail = reservation.userId?.email || 'guest@example.com';
   const userPhone = reservation.userId?.phone || '555-0199';
   const specialRequest = reservation.specialRequest || 'None';
+  const reservationFee = Number(reservation.reservationFee) || 0;
 
   // Copy reference code to clipboard
   const handleCopyRef = () => {
@@ -235,6 +239,13 @@ const BookingReceiptModal = ({ reservation, isOpen, onClose }) => {
                 </div>
               </div>
 
+              {reservationFee > 0 && (
+                <div className="mt-4 flex items-center justify-between border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
+                  <span className="font-semibold text-amber-200">Reservation fee</span>
+                  <strong className="text-amber-300">₱{reservationFee.toLocaleString('en-PH')}</strong>
+                </div>
+              )}
+
               {/* Guest & Venue Details */}
               <div className="mt-5 pt-4 border-t border-slate-800/80 space-y-2 text-xs text-slate-300">
                 <div className="flex items-center justify-between">
@@ -329,6 +340,12 @@ const BookingReceiptModal = ({ reservation, isOpen, onClose }) => {
                     <span className="text-slate-400">Table & Party:</span>
                     <span className="text-white font-medium">Table #{tableNumber} ({guests} Guests)</span>
                   </div>
+                  {reservationFee > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Reservation fee:</span>
+                      <strong className="text-amber-300">₱{reservationFee.toLocaleString('en-PH')}</strong>
+                    </div>
+                  )}
                   {specialRequest && specialRequest !== 'None' && (
                     <div className="flex justify-between">
                       <span className="text-slate-400">Notes:</span>

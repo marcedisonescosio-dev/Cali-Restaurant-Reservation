@@ -1,6 +1,18 @@
 const Reservation = require('../models/Reservation');
 const Table = require('../models/Table');
 const MenuItem = require('../models/MenuItem');
+const {
+  getDiningAreaSettings,
+  getDiningAreaReservationFee
+} = require('../utils/diningAreaSettings');
+
+const resolveTableClass = (table) => {
+  if (table.tableClass) return table.tableClass;
+  const tableNumber = Number(table.tableNumber);
+  if (tableNumber <= 2) return 'window_terrace';
+  if (tableNumber >= 7 && tableNumber <= 8) return 'vip_salons';
+  return 'main_hall';
+};
 
 // @desc    Create a new reservation (with strict double-booking check)
 // @route   POST /api/reservations
@@ -85,7 +97,10 @@ const createReservation = async (req, res) => {
       }
     }
 
-    // 6. Create Reservation
+    // 6. Snapshot the current dining-area fee on the reservation
+    const categoryReservationFee = await getDiningAreaReservationFee(resolveTableClass(table));
+    const reservationFee = table.reservationFeeOverride ?? categoryReservationFee;
+
     const reservation = await Reservation.create({
       userId: req.user._id,
       tableId,
@@ -93,12 +108,13 @@ const createReservation = async (req, res) => {
       reservationTime: reservationTime.trim(),
       guestCount: guests,
       specialRequest: specialRequest ? specialRequest.trim() : '',
+      reservationFee,
       preOrders: preOrderDocs,
       status: 'Pending'
     });
 
     const populated = await reservation.populate([
-      { path: 'tableId', select: 'tableNumber capacity' },
+      { path: 'tableId', select: 'tableNumber capacity tableClass' },
       { path: 'userId', select: 'name email phone' },
       { path: 'preOrders.menuItem', select: 'name price' }
     ]);
@@ -116,7 +132,7 @@ const createReservation = async (req, res) => {
 const getMyReservations = async (req, res) => {
   try {
     const reservations = await Reservation.find({ userId: req.user._id })
-      .populate('tableId', 'tableNumber capacity status')
+      .populate('tableId', 'tableNumber capacity status tableClass')
       .populate('preOrders.menuItem', 'name price')
       .sort({ reservationDate: -1, reservationTime: -1 });
 
@@ -150,13 +166,27 @@ const getAvailableTables = async (req, res) => {
     const bookedTableIds = bookedReservations.map((r) => r.tableId);
 
     // 2. Find tables not under maintenance, with sufficient capacity, and not in bookedTableIds
-    const availableTables = await Table.find({
-      _id: { $nin: bookedTableIds },
-      status: { $ne: 'maintenance' },
-      capacity: { $gte: minGuests }
-    }).sort({ capacity: 1, tableNumber: 1 });
+    const [availableTables, settings] = await Promise.all([
+      Table.find({
+        _id: { $nin: bookedTableIds },
+        status: { $ne: 'maintenance' },
+        capacity: { $gte: minGuests }
+      }).sort({ capacity: 1, tableNumber: 1 }).lean(),
+      getDiningAreaSettings()
+    ]);
+    const feeByClass = new Map(
+      settings.map((setting) => [setting.tableClass, setting.reservationFee])
+    );
+    const pricedTables = availableTables.map((table) => {
+      const categoryReservationFee = Number(feeByClass.get(resolveTableClass(table))) || 0;
+      return {
+        ...table,
+        categoryReservationFee,
+        reservationFee: table.reservationFeeOverride ?? categoryReservationFee
+      };
+    });
 
-    res.status(200).json(availableTables);
+    res.status(200).json(pricedTables);
   } catch (error) {
     console.error('Get available tables error:', error.message);
     res.status(500).json({ message: 'Failed to search available tables' });
@@ -169,7 +199,7 @@ const getAvailableTables = async (req, res) => {
 const getReservationById = async (req, res) => {
   try {
     const reservation = await Reservation.findById(req.params.id)
-      .populate('tableId', 'tableNumber capacity')
+      .populate('tableId', 'tableNumber capacity tableClass')
       .populate('userId', 'name email phone')
       .populate('preOrders.menuItem', 'name price');
 
@@ -249,7 +279,7 @@ const getAllReservationsAdmin = async (req, res) => {
 
     const reservations = await Reservation.find(filter)
       .populate('userId', 'name email phone')
-      .populate('tableId', 'tableNumber capacity')
+      .populate('tableId', 'tableNumber capacity tableClass')
       .populate('preOrders.menuItem', 'name price')
       .sort({ reservationDate: -1, reservationTime: -1 });
 
@@ -305,7 +335,7 @@ const updateReservationStatusAdmin = async (req, res) => {
 
     const populated = await updated.populate([
       { path: 'userId', select: 'name email phone' },
-      { path: 'tableId', select: 'tableNumber capacity' }
+      { path: 'tableId', select: 'tableNumber capacity tableClass' }
     ]);
 
     res.status(200).json(populated);

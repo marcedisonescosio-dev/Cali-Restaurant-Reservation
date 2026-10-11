@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Lock,
   Wrench,
@@ -20,6 +20,14 @@ import {
  * @param {Function} onSelectTable - Callback when user clicks an available table
  * @param {Number} guestCount - Requested party size
  */
+const inferTableClass = (table) => {
+  if (table.tableClass) return table.tableClass;
+  const number = Number(table.tableNumber);
+  if (number <= 2) return 'window_terrace';
+  if (number >= 7 && number <= 8) return 'vip_salons';
+  return 'main_hall';
+};
+
 const RestaurantFloorPlan = ({
   allTables = [],
   availableTables = [],
@@ -27,114 +35,60 @@ const RestaurantFloorPlan = ({
   onSelectTable,
   guestCount = 2
 }) => {
+  const [activeArea, setActiveArea] = useState(null);
+
+  const getAreaFee = (areaId) => Number(
+    allTables.find((table) => inferTableClass(table) === areaId)?.reservationFee
+  ) || 0;
+  const formatAreaFee = (fee) => fee > 0
+    ? `₱${fee.toLocaleString('en-PH')} reservation fee`
+    : 'Free reservation';
+  const areaFilters = [
+    { id: 'window_terrace', label: 'Window Terrace', icon: Sun },
+    { id: 'main_hall', label: 'Main Chandelier Hall', icon: Sparkles },
+    { id: 'vip_salons', label: 'VIP & Executive Dining', icon: Crown }
+  ].map((area) => ({ ...area, detail: formatAreaFee(getAreaFee(area.id)) }));
 
   // Map table positions & zones
   // Table 1, 2: Window Pavilion
   // Table 3, 4: Intimate Booths
   // Table 5, 6: Grand Central Dining
   // Table 7, 8: VIP & Banquet Salons
-  const getTableMeta = (tableNumber) => {
-    switch (Number(tableNumber)) {
-      case 1:
-        return {
-          zone: 'Window Pavilion',
-          zoneIcon: Sun,
-          perk: 'Panoramic Garden View',
-          x: '18%',
-          y: '22%',
-          shape: 'circle',
-          w: 'w-20',
-          h: 'h-20'
-        };
-      case 2:
-        return {
-          zone: 'Window Pavilion',
-          zoneIcon: Sun,
-          perk: 'Sunset Glass Exposure',
-          x: '18%',
-          y: '65%',
-          shape: 'circle',
-          w: 'w-20',
-          h: 'h-20'
-        };
-      case 3:
-        return {
-          zone: 'Intimate Booths',
-          zoneIcon: Flame,
-          perk: 'Plush Velvet Alcove',
-          x: '45%',
-          y: '22%',
-          shape: 'rect',
-          w: 'w-24',
-          h: 'h-20'
-        };
-      case 4:
-        return {
-          zone: 'Intimate Booths',
-          zoneIcon: Flame,
-          perk: 'Candlelight Seclusion',
-          x: '45%',
-          y: '65%',
-          shape: 'rect',
-          w: 'w-24',
-          h: 'h-20'
-        };
-      case 5:
-        return {
-          zone: 'Grand Central Dining',
-          zoneIcon: Sparkles,
-          perk: 'Under Chandelier',
-          x: '72%',
-          y: '22%',
-          shape: 'rect',
-          w: 'w-28',
-          h: 'h-22'
-        };
-      case 6:
-        return {
-          zone: 'Grand Central Dining',
-          zoneIcon: Sparkles,
-          perk: 'Main Hall Ambiance',
-          x: '72%',
-          y: '65%',
-          shape: 'rect',
-          w: 'w-28',
-          h: 'h-22'
-        };
-      case 7:
-        return {
-          zone: "Chef's VIP Salon",
-          zoneIcon: Crown,
-          perk: 'Kitchen View Tasting',
-          x: '92%',
-          y: '22%',
-          shape: 'oval',
-          w: 'w-32',
-          h: 'h-24'
-        };
-      case 8:
-        return {
-          zone: 'Executive Banquet',
-          zoneIcon: Crown,
-          perk: 'Large Celebration Space',
-          x: '92%',
-          y: '65%',
-          shape: 'oval',
-          w: 'w-36',
-          h: 'h-26'
-        };
-      default:
-        return {
-          zone: 'Dining Hall',
-          zoneIcon: Sparkles,
-          perk: 'Comfortable Dining',
-          x: '50%',
-          y: '50%',
-          shape: 'rect',
-          w: 'w-24',
-          h: 'h-20'
-        };
+  const getTableMeta = (table) => {
+    const tableNumber = Number(table.tableNumber);
+    const tableClass = inferTableClass(table);
+
+    if (tableClass === 'window_terrace') {
+      return {
+        zone: 'Window Terrace',
+        zoneIcon: Sun,
+        perk: tableNumber === 2 ? 'Sunset Glass Exposure' : 'Panoramic Garden View',
+        shape: 'circle'
+      };
     }
+
+    if (tableClass === 'vip_salons') {
+      return {
+        zone: tableNumber === 8 ? 'Executive Banquet' : "Chef's VIP Dining",
+        zoneIcon: Crown,
+        perk: tableNumber === 8 ? 'Large Celebration Space' : 'Kitchen View Tasting',
+        shape: 'oval'
+      };
+    }
+
+    const intimateBooth = tableNumber === 3 || tableNumber === 4;
+    return {
+      zone: intimateBooth ? 'Intimate Booths' : 'Grand Central Dining',
+      zoneIcon: intimateBooth ? Flame : Sparkles,
+      perk: tableNumber === 3
+        ? 'Plush Velvet Alcove'
+        : tableNumber === 4
+        ? 'Candlelight Seclusion'
+        : tableNumber === 5
+        ? 'Under Chandelier'
+        : 'Main Hall Ambiance',
+      shape: 'rect'
+    };
   };
 
   // Determine state of table
@@ -146,6 +100,22 @@ const RestaurantFloorPlan = ({
     if (selectedTable?._id === table._id) return 'selected';
     return 'available';
   };
+
+  const selectedArea = areaFilters.find((area) => area.id === activeArea);
+  const areaTables = selectedArea
+    ? allTables.filter((table) => inferTableClass(table) === selectedArea.id)
+    : [];
+  const visibleTables = [...areaTables].sort((firstTable, secondTable) => {
+    const firstNumber = Number(firstTable.tableNumber);
+    const secondNumber = Number(secondTable.tableNumber);
+    const firstIsVip = inferTableClass(firstTable) === 'vip_salons';
+    const secondIsVip = inferTableClass(secondTable) === 'vip_salons';
+
+    if (firstIsVip !== secondIsVip) return firstIsVip ? -1 : 1;
+    return firstNumber - secondNumber;
+  });
+
+  const selectArea = (areaId) => setActiveArea(areaId);
 
   return (
     <div className="space-y-4">
@@ -188,28 +158,53 @@ const RestaurantFloorPlan = ({
         ></div>
 
         {/* Room Boundaries & Architectural Labels */}
-        <div className="relative z-10 flex items-center justify-between pb-3 border-b border-slate-800/80 text-[11px] uppercase tracking-wider font-semibold text-slate-500">
-          <div className="flex items-center gap-1.5 text-amber-400">
-            <Sun className="w-3.5 h-3.5" />
-            <span>Window Terrace (Garden View)</span>
-          </div>
+        <div
+          className="relative z-10 grid grid-cols-1 gap-2 border-b border-slate-800/80 pb-3 sm:grid-cols-3"
+          role="group"
+          aria-label="Filter tables by dining area"
+        >
+          {areaFilters.map((area) => {
+            const AreaIcon = area.icon;
+            const isActive = activeArea === area.id;
+            const tableCount = allTables.filter((table) => inferTableClass(table) === area.id).length;
 
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Main Chandelier Hall</span>
-          </div>
+            return (
+              <button
+                key={area.id}
+                type="button"
+                onClick={() => selectArea(area.id)}
+                aria-pressed={isActive}
+                className={`flex min-h-11 items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition-colors ${
+                  isActive
+                    ? 'border-amber-400 bg-amber-500/15 text-amber-300'
+                    : 'border-transparent text-slate-400 hover:border-slate-700 hover:bg-slate-900/70 hover:text-slate-200'
+                }`}
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <AreaIcon className={`h-4 w-4 shrink-0 ${isActive ? 'text-amber-400' : 'text-slate-500'}`} />
+                  <span className="min-w-0">
+                    <span className="block truncate text-[11px] font-bold uppercase tracking-wide">{area.label}</span>
+                    <span className="block truncate text-[10px] font-medium normal-case tracking-normal opacity-70">{area.detail}</span>
+                  </span>
+                </span>
+                <span className="shrink-0 text-[10px] font-semibold" aria-label={`${tableCount} tables`}>{tableCount}</span>
+              </button>
+            );
+          })}
+        </div>
 
-          <div className="flex items-center gap-1.5 text-amber-400">
-            <Crown className="w-3.5 h-3.5" />
-            <span>VIP & Executive Salons</span>
-          </div>
+        <div className="relative z-10 flex min-h-9 items-center pt-3 text-xs text-slate-400" aria-live="polite">
+          <span>{selectedArea ? `Showing ${selectedArea.label}` : 'Choose a dining area to view its tables'}</span>
         </div>
 
         {/* Floor Plan Tables Grid */}
         <div className="relative z-10 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
-          {allTables.map((table) => {
+          {visibleTables.map((table, tableIndex) => {
             const status = getTableStatus(table);
-            const meta = getTableMeta(table.tableNumber);
+            const meta = getTableMeta(table);
+            const isVip = inferTableClass(table) === 'vip_salons';
+            const displayTableNumber = isVip ? tableIndex + 1 : table.tableNumber;
+            const reservationFee = Number(table.reservationFee) || 0;
             const ZoneIcon = meta.zoneIcon;
             const isClickable = status === 'available' || status === 'selected';
             const isSelected = status === 'selected';
@@ -219,14 +214,20 @@ const RestaurantFloorPlan = ({
                 key={table._id}
                 onClick={() => {
                   if (isClickable) {
-                    onSelectTable(table);
+                    onSelectTable({ ...table, displayTableNumber });
                   }
                 }}
                 className={`relative rounded-2xl p-4 flex flex-col justify-between transition-colors border ${
                   isSelected
-                    ? 'bg-amber-500/15 border-amber-400 cursor-pointer'
+                    ? isVip
+                      ? 'bg-[#21190d] border-amber-300 cursor-pointer ring-1 ring-amber-300/20'
+                      : 'bg-amber-500/15 border-amber-400 cursor-pointer'
                     : status === 'available'
-                    ? 'bg-slate-900/80 border-emerald-500/40 hover:border-amber-400 hover:bg-slate-900 cursor-pointer'
+                    ? isVip
+                      ? 'bg-[#17130d] border-amber-500/70 hover:border-amber-300 hover:bg-[#1d170e] cursor-pointer'
+                      : reservationFee > 0
+                      ? 'bg-amber-950/20 border-amber-500/60 hover:border-amber-300 hover:bg-amber-950/30 cursor-pointer'
+                      : 'bg-slate-900/80 border-emerald-500/40 hover:border-amber-400 hover:bg-slate-900 cursor-pointer'
                     : status === 'too_small'
                     ? 'bg-slate-950/40 border-slate-800/50 opacity-40 cursor-not-allowed'
                     : status === 'maintenance'
@@ -234,10 +235,12 @@ const RestaurantFloorPlan = ({
                     : 'bg-slate-950/60 border-slate-800/80 opacity-60 cursor-not-allowed'
                 }`}
               >
+                {isVip && <div className="absolute inset-x-4 top-0 h-px bg-amber-300/70" aria-hidden="true" />}
+
                 {/* Top Badge: Zone & Status */}
                 <div className="flex items-center justify-between gap-1 mb-3">
-                  <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
-                    <ZoneIcon className="w-3 h-3 text-amber-400" />
+                  <span className={`flex items-center gap-1 text-[10px] font-semibold ${isVip ? 'text-amber-200' : 'text-slate-400'}`}>
+                    <ZoneIcon className={`h-3 w-3 ${isVip ? 'text-amber-300' : 'text-amber-400'}`} />
                     <span className="truncate max-w-[85px]">{meta.zone}</span>
                   </span>
 
@@ -247,9 +250,15 @@ const RestaurantFloorPlan = ({
                     </span>
                   )}
                   {status === 'available' && !isSelected && (
-                    <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                      Free
-                    </span>
+                    reservationFee > 0 ? (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/40">
+                        ₱{reservationFee}
+                      </span>
+                    ) : (
+                      <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        Free
+                      </span>
+                    )
                   )}
                   {status === 'booked' && (
                     <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-400 flex items-center gap-1">
@@ -277,39 +286,59 @@ const RestaurantFloorPlan = ({
                         : 'w-18 h-16 rounded-2xl'
                     } ${
                       isSelected
-                        ? 'bg-amber-500 text-slate-950 font-bold'
+                        ? isVip
+                          ? 'bg-amber-400 text-slate-950 font-bold ring-1 ring-amber-200'
+                          : 'bg-amber-500 text-slate-950 font-bold'
                         : status === 'available'
-                        ? 'bg-slate-800 border-2 border-emerald-500/60 text-white hover:border-amber-400'
+                        ? isVip
+                          ? 'bg-[#2a1e0d] border border-amber-300 text-amber-50 ring-1 ring-amber-400/20'
+                          : 'bg-slate-800 border-2 border-emerald-500/60 text-white hover:border-amber-400'
                         : 'bg-slate-900 border border-slate-800 text-slate-500'
                     }`}
                   >
                     {/* Simulated Chairs around table */}
-                    <div className="absolute -top-1.5 w-4 h-1 rounded-full bg-slate-600/70"></div>
-                    <div className="absolute -bottom-1.5 w-4 h-1 rounded-full bg-slate-600/70"></div>
-                    <div className="absolute -left-1.5 w-1 h-4 rounded-full bg-slate-600/70"></div>
-                    <div className="absolute -right-1.5 w-1 h-4 rounded-full bg-slate-600/70"></div>
+                    <div className="absolute -top-1.5 w-4 h-1 rounded-full ${isVip ? 'bg-amber-300/70' : 'bg-slate-600/70'}"></div>
+                    <div className="absolute -bottom-1.5 w-4 h-1 rounded-full ${isVip ? 'bg-amber-300/70' : 'bg-slate-600/70'}"></div>
+                    <div className="absolute -left-1.5 w-1 h-4 rounded-full ${isVip ? 'bg-amber-300/70' : 'bg-slate-600/70'}"></div>
+                    <div className="absolute -right-1.5 w-1 h-4 rounded-full ${isVip ? 'bg-amber-300/70' : 'bg-slate-600/70'}"></div>
 
                     <div className="text-center">
                       <span className="text-sm font-extrabold block leading-tight">
-                        #{table.tableNumber}
+                        #{displayTableNumber}
                       </span>
-                      <span className="text-[9px] uppercase tracking-tighter opacity-80">
-                        {table.capacity} seats
+                      <span className={`text-[9px] uppercase opacity-80 ${isVip ? 'tracking-wide text-amber-100' : 'tracking-tighter'}`}>
+                        {isVip ? `VIP · ${table.capacity} seats` : `${table.capacity} seats`}
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Table Perceived Atmosphere / Feature */}
-                <div className="mt-3 pt-2 border-t border-slate-800/80 text-[10px] flex items-center justify-between text-slate-400">
+                <div className={`mt-3 flex items-center justify-between border-t pt-2 text-[10px] ${
+                  isVip ? 'border-amber-500/25 text-amber-100/70' : 'border-slate-800/80 text-slate-400'
+                }`}>
                   <span className="truncate">{meta.perk}</span>
-                  {status === 'available' && !isSelected && (
+                  {reservationFee > 0 ? (
+                    <span className="text-amber-300 font-bold shrink-0">₱{reservationFee} fee</span>
+                  ) : status === 'available' && !isSelected ? (
                     <span className="text-amber-400 font-semibold shrink-0">Click</span>
-                  )}
+                  ) : null}
                 </div>
               </div>
             );
           })}
+
+          {!selectedArea && (
+            <div className="col-span-full border border-dashed border-slate-700 px-4 py-10 text-center text-sm text-slate-400">
+              Select a dining area above to view available tables.
+            </div>
+          )}
+
+          {selectedArea && visibleTables.length === 0 && (
+            <div className="col-span-full border border-dashed border-slate-700 px-4 py-10 text-center text-sm text-slate-400">
+              No tables are configured in this dining area yet.
+            </div>
+          )}
         </div>
 
         {/* Bottom Entrance & Bar Anchors */}

@@ -71,14 +71,14 @@ const seedInitialData = async (req, res) => {
     const tableCount = await Table.countDocuments();
     if (tableCount === 0) {
       const sampleTables = [
-        { tableNumber: 1, capacity: 2, status: 'available' },
-        { tableNumber: 2, capacity: 2, status: 'available' },
-        { tableNumber: 3, capacity: 4, status: 'available' },
-        { tableNumber: 4, capacity: 4, status: 'available' },
-        { tableNumber: 5, capacity: 6, status: 'available' },
-        { tableNumber: 6, capacity: 6, status: 'available' },
-        { tableNumber: 7, capacity: 8, status: 'available' },
-        { tableNumber: 8, capacity: 10, status: 'available' }
+        { tableNumber: 1, capacity: 2, tableClass: 'window_terrace', status: 'available' },
+        { tableNumber: 2, capacity: 2, tableClass: 'window_terrace', status: 'available' },
+        { tableNumber: 3, capacity: 4, tableClass: 'main_hall', status: 'available' },
+        { tableNumber: 4, capacity: 4, tableClass: 'main_hall', status: 'available' },
+        { tableNumber: 5, capacity: 6, tableClass: 'main_hall', status: 'available' },
+        { tableNumber: 6, capacity: 6, tableClass: 'main_hall', status: 'available' },
+        { tableNumber: 7, capacity: 8, tableClass: 'vip_salons', status: 'available' },
+        { tableNumber: 8, capacity: 10, tableClass: 'vip_salons', status: 'available' }
       ];
       await Table.insertMany(sampleTables);
     }

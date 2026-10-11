@@ -7,6 +7,7 @@ const connectDB = require('./config/db');
 // Load models to ensure schemas are registered
 require('./models/User');
 require('./models/Table');
+require('./models/DiningAreaSetting');
 require('./models/MenuCategory');
 require('./models/MenuItem');
 require('./models/Reservation');

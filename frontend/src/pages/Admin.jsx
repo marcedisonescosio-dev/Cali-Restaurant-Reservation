@@ -4,10 +4,15 @@ import {
   LayoutDashboard,
   CalendarCheck,
   Armchair,
+  Sun,
+  Sparkles,
+  Crown,
   UtensilsCrossed,
   Plus,
   RefreshCw,
   Edit2,
+  Settings2,
+  Banknote,
   Trash2,
   CheckCircle,
   XCircle,
@@ -21,6 +26,47 @@ import {
   Printer,
   ClipboardList
 } from 'lucide-react';
+
+const TABLE_CLASS_OPTIONS = [
+  { value: 'window_terrace', label: 'Window Terrace', detail: 'Garden view', defaultFee: 0, icon: Sun },
+  { value: 'main_hall', label: 'Main Chandelier Hall', detail: 'Main dining room', defaultFee: 0, icon: Sparkles },
+  { value: 'vip_salons', label: 'VIP & Executive Dining', detail: 'Private dining rooms', defaultFee: 500, icon: Crown }
+];
+
+const formatReservationFee = (fee) => {
+  const numericFee = Number(fee) || 0;
+  return numericFee > 0
+    ? `₱${numericFee.toLocaleString('en-PH')} reservation fee`
+    : 'Free reservation';
+};
+
+const getTableClassValue = (table) => {
+  if (table.tableClass) return table.tableClass;
+  const number = Number(table.tableNumber);
+  if (number <= 2) return 'window_terrace';
+  if (number >= 7 && number <= 8) return 'vip_salons';
+  return 'main_hall';
+};
+
+const TableClassLabel = ({ table }) => {
+  const option = TABLE_CLASS_OPTIONS.find((item) => item.value === getTableClassValue(table));
+  const Icon = option?.icon || Sparkles;
+
+  return (
+    <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-slate-300">
+      <Icon className="h-3.5 w-3.5 text-amber-400" aria-hidden="true" />
+      <span>{option?.label || 'Main Chandelier Hall'}</span>
+      <span className={Number(table.reservationFee) > 0 ? 'text-amber-300' : 'text-emerald-400'}>
+        · {formatReservationFee(table.reservationFee)}
+      </span>
+      {table.reservationFeeOverride !== null && table.reservationFeeOverride !== undefined && (
+        <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-amber-200">
+          Custom
+        </span>
+      )}
+    </p>
+  );
+};
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -44,8 +90,30 @@ const Admin = () => {
   const [tables, setTables] = useState([]);
   const [loadingTables, setLoadingTables] = useState(false);
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
-  const [tableFormData, setTableFormData] = useState({ tableNumber: '', capacity: 2, status: 'available' });
+  const [tableFormData, setTableFormData] = useState({ tableNumber: '', capacity: 2, tableClass: 'window_terrace', status: 'available' });
   const [editingTableId, setEditingTableId] = useState(null);
+  const [selectedTableClass, setSelectedTableClass] = useState(null);
+  const [diningAreaSettings, setDiningAreaSettings] = useState([]);
+  const [isAreaPricingModalOpen, setIsAreaPricingModalOpen] = useState(false);
+  const [editingAreaClass, setEditingAreaClass] = useState(null);
+  const [areaPricingForm, setAreaPricingForm] = useState({ mode: 'free', reservationFee: 0 });
+  const [savingAreaPricing, setSavingAreaPricing] = useState(false);
+  const [isTablePricingModalOpen, setIsTablePricingModalOpen] = useState(false);
+  const [pricingTable, setPricingTable] = useState(null);
+  const [tablePricingForm, setTablePricingForm] = useState({ mode: 'area', reservationFee: 0 });
+  const [savingTablePricing, setSavingTablePricing] = useState(false);
+
+  const selectedTableClassOption = TABLE_CLASS_OPTIONS.find(
+    (option) => option.value === selectedTableClass
+  );
+  const visibleTables = selectedTableClass
+    ? tables.filter((table) => getTableClassValue(table) === selectedTableClass)
+    : [];
+  const getAreaReservationFee = (tableClass) => {
+    const option = TABLE_CLASS_OPTIONS.find((item) => item.value === tableClass);
+    const setting = diningAreaSettings.find((item) => item.tableClass === tableClass);
+    return Number(setting?.reservationFee ?? option?.defaultFee ?? 0);
+  };
 
   // Menu items & Categories state
   const [menuItems, setMenuItems] = useState([]);
@@ -104,8 +172,12 @@ const Admin = () => {
   const fetchTables = useCallback(async () => {
     try {
       setLoadingTables(true);
-      const res = await api.get('/tables');
-      setTables(res.data);
+      const [tablesRes, settingsRes] = await Promise.all([
+        api.get('/tables'),
+        api.get('/tables/area-settings')
+      ]);
+      setTables(tablesRes.data);
+      setDiningAreaSettings(settingsRes.data);
     } catch (err) {
       console.error('Failed to fetch tables:', err.message);
     } finally {
@@ -222,11 +294,93 @@ const Admin = () => {
       }
       setIsTableModalOpen(false);
       setEditingTableId(null);
-      setTableFormData({ tableNumber: '', capacity: 2, status: 'available' });
+      setSelectedTableClass(tableFormData.tableClass);
+      setTableFormData({ tableNumber: '', capacity: 2, tableClass: 'window_terrace', status: 'available' });
       fetchTables();
       fetchStats();
     } catch (err) {
       showBanner('error', err.response?.data?.message || 'Failed to save table');
+    }
+  };
+
+  const openAreaPricing = (tableClass) => {
+    const reservationFee = getAreaReservationFee(tableClass);
+    setEditingAreaClass(tableClass);
+    setAreaPricingForm({
+      mode: reservationFee > 0 ? 'paid' : 'free',
+      reservationFee
+    });
+    setIsAreaPricingModalOpen(true);
+  };
+
+  const handleAreaPricingSubmit = async (event) => {
+    event.preventDefault();
+    const reservationFee = areaPricingForm.mode === 'free'
+      ? 0
+      : Number(areaPricingForm.reservationFee);
+
+    if (!Number.isFinite(reservationFee) || reservationFee < 0) {
+      showBanner('error', 'Enter a valid reservation fee');
+      return;
+    }
+
+    try {
+      setSavingAreaPricing(true);
+      await api.put('/tables/area-settings', {
+        tableClass: editingAreaClass,
+        reservationFee
+      });
+      await fetchTables();
+      setIsAreaPricingModalOpen(false);
+      showBanner(
+        'success',
+        `${TABLE_CLASS_OPTIONS.find((option) => option.value === editingAreaClass)?.label} pricing updated`
+      );
+    } catch (err) {
+      showBanner('error', err.response?.data?.message || 'Failed to update dining area pricing');
+    } finally {
+      setSavingAreaPricing(false);
+    }
+  };
+
+  const openTablePricing = (table) => {
+    const hasOverride = table.reservationFeeOverride !== null
+      && table.reservationFeeOverride !== undefined;
+    setPricingTable({
+      ...table,
+      displayName: selectedTableClass === 'vip_salons'
+        ? `VIP Table #${visibleTables.indexOf(table) + 1}`
+        : `Table #${table.tableNumber}`
+    });
+    setTablePricingForm({
+      mode: hasOverride ? 'custom' : 'area',
+      reservationFee: table.reservationFee
+    });
+    setIsTablePricingModalOpen(true);
+  };
+
+  const handleTablePricingSubmit = async (event) => {
+    event.preventDefault();
+    const useAreaPrice = tablePricingForm.mode === 'area';
+    const reservationFee = Number(tablePricingForm.reservationFee);
+    if (!useAreaPrice && (!Number.isFinite(reservationFee) || reservationFee < 0)) {
+      showBanner('error', 'Enter a valid table price');
+      return;
+    }
+
+    try {
+      setSavingTablePricing(true);
+      await api.put(`/tables/${pricingTable._id}/pricing`, {
+        useAreaPrice,
+        reservationFee
+      });
+      await fetchTables();
+      setIsTablePricingModalOpen(false);
+      showBanner('success', `${pricingTable.displayName} pricing updated`);
+    } catch (err) {
+      showBanner('error', err.response?.data?.message || 'Failed to update table pricing');
+    } finally {
+      setSavingTablePricing(false);
     }
   };
 
@@ -739,7 +893,7 @@ const Admin = () => {
             <button
               onClick={() => {
                 setEditingTableId(null);
-                setTableFormData({ tableNumber: '', capacity: 2, status: 'available' });
+                setTableFormData({ tableNumber: '', capacity: 2, tableClass: 'window_terrace', status: 'available' });
                 setIsTableModalOpen(true);
               }}
               className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition-colors"
@@ -748,6 +902,82 @@ const Admin = () => {
               Add Dining Table
             </button>
           </div>
+
+          <div
+            className="grid grid-cols-1 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 sm:grid-cols-3"
+            role="group"
+            aria-label="Filter tables by dining area"
+          >
+            {TABLE_CLASS_OPTIONS.map((option) => {
+              const Icon = option.icon;
+              const isActive = selectedTableClass === option.value;
+              const reservationFee = getAreaReservationFee(option.value);
+              const count = tables.filter(
+                (table) => getTableClassValue(table) === option.value
+              ).length;
+
+              return (
+                <div
+                  key={option.value}
+                  className={`flex min-w-0 items-stretch border-b last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0 ${
+                    isActive
+                      ? 'border-amber-500/50 bg-amber-500/10'
+                      : 'border-slate-800 bg-slate-900/30'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTableClass(option.value)}
+                    aria-pressed={isActive}
+                    className={`flex min-w-0 flex-1 items-center gap-3 px-4 py-4 text-left transition-colors ${
+                      isActive ? 'text-white' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+                    }`}
+                  >
+                    <Icon
+                      className={`h-5 w-5 shrink-0 ${isActive ? 'text-amber-400' : 'text-slate-500'}`}
+                      aria-hidden="true"
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-xs font-bold uppercase tracking-wide">
+                        {option.label}
+                      </span>
+                      <span className={`mt-0.5 block truncate text-[11px] ${
+                        reservationFee > 0 ? 'text-amber-300' : 'text-emerald-400'
+                      }`}>
+                        {formatReservationFee(reservationFee)}
+                      </span>
+                    </span>
+                  </button>
+
+                  <div className="flex shrink-0 flex-col items-end justify-center gap-1.5 pr-3">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                        isActive ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-300'
+                      }`}
+                      aria-label={`${count} tables`}
+                    >
+                      {count}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openAreaPricing(option.value)}
+                      className="flex items-center gap-1 rounded-md px-1.5 py-1 text-[10px] font-semibold text-slate-400 hover:bg-slate-800 hover:text-amber-300"
+                      aria-label={`Edit pricing for ${option.label}`}
+                    >
+                      <Settings2 className="h-3 w-3" aria-hidden="true" />
+                      Pricing
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="text-xs text-slate-400">
+            {selectedTableClassOption
+              ? `Showing ${selectedTableClassOption.label}`
+              : 'Choose a dining area to view its tables.'}
+          </p>
 
           {loadingTables ? (
             <div className="py-20 text-center space-y-3">
@@ -758,20 +988,40 @@ const Admin = () => {
             <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-12 text-center text-slate-400 text-sm">
               No tables configured yet. Click "Add Dining Table" or seed initial sample data.
             </div>
+          ) : !selectedTableClass ? (
+            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-12 text-center text-slate-400 text-sm">
+              Select one of the dining areas above to view its tables.
+            </div>
+          ) : visibleTables.length === 0 ? (
+            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-12 text-center text-slate-400 text-sm">
+              No tables are configured in {selectedTableClassOption?.label || 'this dining area'}.
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {tables.map((table) => (
+              {visibleTables.map((table) => (
                 <div
                   key={table._id}
-                  className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between"
+                  className={`rounded-2xl border p-5 flex flex-col justify-between ${
+                    selectedTableClass === 'vip_salons'
+                      ? 'border-amber-500/40 bg-[#17130d]'
+                      : 'border-slate-800 bg-slate-900/80 shadow-lg'
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-lg font-bold text-white">Table #{table.tableNumber}</h3>
+                      <h3 className={`text-lg font-bold ${selectedTableClass === 'vip_salons' ? 'text-amber-100' : 'text-white'}`}>
+                        {selectedTableClass === 'vip_salons'
+                          ? `VIP Table #${visibleTables.indexOf(table) + 1}`
+                          : `Table #${table.tableNumber}`}
+                      </h3>
+                      {selectedTableClass === 'vip_salons' && (
+                        <p className="mt-0.5 text-[10px] text-amber-200/60">Internal table #{table.tableNumber}</p>
+                      )}
                       <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
                         <Users className="w-3.5 h-3.5 text-amber-400" />
                         Seats {table.capacity} guests
                       </p>
+                      <TableClassLabel table={table} />
                     </div>
 
                     <span
@@ -788,12 +1038,28 @@ const Admin = () => {
                   </div>
 
                   <div className="mt-5 pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
+                    {(
+                      Number(table.reservationFee) > 0
+                      || Number(table.categoryReservationFee) > 0
+                      || (table.reservationFeeOverride !== null && table.reservationFeeOverride !== undefined)
+                    ) && (
+                      <button
+                        type="button"
+                        onClick={() => openTablePricing(table)}
+                        className="mr-auto flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] font-semibold text-amber-300 hover:bg-amber-500/10"
+                        title="Edit table price"
+                      >
+                        <Banknote className="h-3.5 w-3.5" aria-hidden="true" />
+                        Edit price
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setEditingTableId(table._id);
                         setTableFormData({
                           tableNumber: table.tableNumber,
                           capacity: table.capacity,
+                          tableClass: getTableClassValue(table),
                           status: table.status
                         });
                         setIsTableModalOpen(true);
@@ -813,6 +1079,230 @@ const Admin = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {isTablePricingModalOpen && pricingTable && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+                <div className="flex items-start justify-between border-b border-slate-800 pb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Table pricing</h3>
+                    <p className="mt-1 text-sm text-slate-400">{pricingTable.displayName}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsTablePricingModalOpen(false)}
+                    className="rounded-md p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+                    aria-label="Close table pricing editor"
+                  >
+                    <XCircle className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleTablePricingSubmit} className="mt-5 space-y-5">
+                  <fieldset>
+                    <legend className="mb-2 text-xs font-semibold uppercase text-slate-400">
+                      Price source
+                    </legend>
+                    <div className="space-y-2">
+                      <label className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 ${
+                        tablePricingForm.mode === 'area'
+                          ? 'border-amber-400 bg-amber-500/10'
+                          : 'border-slate-800 bg-slate-950'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="tablePricingMode"
+                          value="area"
+                          checked={tablePricingForm.mode === 'area'}
+                          onChange={() => setTablePricingForm({
+                            ...tablePricingForm,
+                            mode: 'area'
+                          })}
+                          className="mt-0.5 h-4 w-4 accent-amber-500"
+                        />
+                        <span>
+                          <span className="block text-sm font-semibold text-white">Use dining-area price</span>
+                          <span className="mt-0.5 block text-xs text-slate-400">
+                            {formatReservationFee(pricingTable.categoryReservationFee)}
+                          </span>
+                        </span>
+                      </label>
+
+                      <label className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 ${
+                        tablePricingForm.mode === 'custom'
+                          ? 'border-amber-400 bg-amber-500/10'
+                          : 'border-slate-800 bg-slate-950'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="tablePricingMode"
+                          value="custom"
+                          checked={tablePricingForm.mode === 'custom'}
+                          onChange={() => setTablePricingForm({
+                            ...tablePricingForm,
+                            mode: 'custom'
+                          })}
+                          className="mt-0.5 h-4 w-4 accent-amber-500"
+                        />
+                        <span className="text-sm font-semibold text-white">Set a custom table price</span>
+                      </label>
+                    </div>
+                  </fieldset>
+
+                  {tablePricingForm.mode === 'custom' && (
+                    <div>
+                      <label htmlFor="table-reservation-fee" className="mb-1.5 block text-xs font-semibold uppercase text-slate-400">
+                        Fee per reservation
+                      </label>
+                      <div className="flex overflow-hidden rounded-xl border border-slate-800 bg-slate-950 focus-within:border-amber-500">
+                        <span className="flex items-center border-r border-slate-800 px-3 text-sm font-bold text-slate-400">₱</span>
+                        <input
+                          id="table-reservation-fee"
+                          type="number"
+                          min="0"
+                          max="1000000"
+                          step="0.01"
+                          required
+                          value={tablePricingForm.reservationFee}
+                          onChange={(event) => setTablePricingForm({
+                            ...tablePricingForm,
+                            reservationFee: event.target.value
+                          })}
+                          className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm text-white outline-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-xs leading-relaxed text-slate-400">
+                    This override affects only this table. New reservations use the updated amount.
+                  </p>
+
+                  <div className="flex justify-end gap-2 border-t border-slate-800 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setIsTablePricingModalOpen(false)}
+                      className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingTablePricing}
+                      className="rounded-xl bg-amber-500 px-5 py-2 text-xs font-bold text-slate-950 hover:bg-amber-400 disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {savingTablePricing ? 'Saving...' : 'Save table price'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {isAreaPricingModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+                <div className="flex items-start justify-between border-b border-slate-800 pb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Dining area pricing</h3>
+                    <p className="mt-1 text-sm text-slate-400">
+                      {TABLE_CLASS_OPTIONS.find((option) => option.value === editingAreaClass)?.label}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsAreaPricingModalOpen(false)}
+                    className="rounded-md p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+                    aria-label="Close pricing editor"
+                  >
+                    <XCircle className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleAreaPricingSubmit} className="mt-5 space-y-5">
+                  <fieldset>
+                    <legend className="mb-2 text-xs font-semibold uppercase text-slate-400">
+                      Reservation charge
+                    </legend>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { value: 'free', label: 'Free' },
+                        { value: 'paid', label: 'Paid' }
+                      ].map((choice) => (
+                        <label
+                          key={choice.value}
+                          className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold ${
+                            areaPricingForm.mode === choice.value
+                              ? 'border-amber-400 bg-amber-500/10 text-white'
+                              : 'border-slate-800 bg-slate-950 text-slate-300'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="areaPricingMode"
+                            value={choice.value}
+                            checked={areaPricingForm.mode === choice.value}
+                            onChange={(event) => setAreaPricingForm({
+                              ...areaPricingForm,
+                              mode: event.target.value
+                            })}
+                            className="h-4 w-4 accent-amber-500"
+                          />
+                          {choice.label}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  {areaPricingForm.mode === 'paid' && (
+                    <div>
+                      <label htmlFor="area-reservation-fee" className="mb-1.5 block text-xs font-semibold uppercase text-slate-400">
+                        Fee per reservation
+                      </label>
+                      <div className="flex overflow-hidden rounded-xl border border-slate-800 bg-slate-950 focus-within:border-amber-500">
+                        <span className="flex items-center border-r border-slate-800 px-3 text-sm font-bold text-slate-400">₱</span>
+                        <input
+                          id="area-reservation-fee"
+                          type="number"
+                          min="1"
+                          max="1000000"
+                          step="0.01"
+                          required
+                          value={areaPricingForm.reservationFee}
+                          onChange={(event) => setAreaPricingForm({
+                            ...areaPricingForm,
+                            reservationFee: event.target.value
+                          })}
+                          className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm text-white outline-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-xs leading-relaxed text-slate-400">
+                    This is the default for the dining area. Tables with custom prices keep their overrides, and existing receipts keep their original fee.
+                  </p>
+
+                  <div className="flex justify-end gap-2 border-t border-slate-800 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setIsAreaPricingModalOpen(false)}
+                      className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingAreaPricing}
+                      className="rounded-xl bg-amber-500 px-5 py-2 text-xs font-bold text-slate-950 hover:bg-amber-400 disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {savingAreaPricing ? 'Saving...' : 'Save pricing'}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
 
@@ -864,6 +1354,43 @@ const Admin = () => {
                       className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-amber-500"
                     />
                   </div>
+
+                  <fieldset>
+                    <legend className="mb-2 block text-xs font-semibold uppercase text-slate-400">
+                      Dining Area
+                    </legend>
+                    <div className="grid gap-2">
+                      {TABLE_CLASS_OPTIONS.map((option) => {
+                        const OptionIcon = option.icon;
+                        const isSelected = tableFormData.tableClass === option.value;
+
+                        return (
+                          <label
+                            key={option.value}
+                            className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 transition-colors ${
+                              isSelected
+                                ? 'border-amber-400 bg-amber-500/10 text-white'
+                                : 'border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="tableClass"
+                              value={option.value}
+                              checked={isSelected}
+                              onChange={(event) => setTableFormData({ ...tableFormData, tableClass: event.target.value })}
+                              className="h-4 w-4 accent-amber-500"
+                            />
+                            <OptionIcon className="h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
+                            <span>
+                              <span className="block text-sm font-semibold">{option.label}</span>
+                              <span className="block text-[11px] text-slate-500">{option.detail}</span>
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
 
                   <div>
                     <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">

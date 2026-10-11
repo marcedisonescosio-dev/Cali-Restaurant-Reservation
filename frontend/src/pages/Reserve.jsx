@@ -26,6 +26,39 @@ const TIME_SLOTS = [
   '07:00 PM', '07:30 PM', '08:00 PM', '08:30 PM', '09:00 PM'
 ];
 
+const getTableClassValue = (table) => {
+  if (table?.tableClass) return table.tableClass;
+  const number = Number(table?.tableNumber);
+  if (number <= 2) return 'window_terrace';
+  if (number >= 7 && number <= 8) return 'vip_salons';
+  return 'main_hall';
+};
+
+const getSectionTableNumber = (table, allTables = []) => {
+  if (!table || getTableClassValue(table) !== 'vip_salons') return table?.tableNumber;
+  if (table.displayTableNumber) return table.displayTableNumber;
+
+  const vipTables = allTables
+    .filter((candidate) => getTableClassValue(candidate) === 'vip_salons')
+    .sort((first, second) => Number(first.tableNumber) - Number(second.tableNumber));
+  const index = vipTables.findIndex((candidate) => candidate._id === table._id);
+  if (index >= 0) return index + 1;
+
+  const legacyNumber = Number(table.tableNumber);
+  return legacyNumber >= 7 && legacyNumber <= 8 ? legacyNumber - 6 : table.tableNumber;
+};
+
+const withSectionTableNumber = (reservation, allTables) => {
+  if (!reservation?.tableId) return reservation;
+  return {
+    ...reservation,
+    tableId: {
+      ...reservation.tableId,
+      displayTableNumber: getSectionTableNumber(reservation.tableId, allTables)
+    }
+  };
+};
+
 const Reserve = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -168,8 +201,20 @@ const Reserve = () => {
         preOrders
       });
 
-      setBookingSuccess(res.data);
-      setViewingReceiptReservation(res.data);
+      const reservationWithDisplayNumber = withSectionTableNumber(
+        {
+          ...res.data,
+          tableId: res.data.tableId
+            ? {
+                ...res.data.tableId,
+                displayTableNumber: getSectionTableNumber(selectedTable, allTables)
+              }
+            : res.data.tableId
+        },
+        allTables
+      );
+      setBookingSuccess(reservationWithDisplayNumber);
+      setViewingReceiptReservation(reservationWithDisplayNumber);
       setSelectedTable(null);
       setSpecialRequest('');
       setPreOrderQty({});
@@ -274,12 +319,17 @@ const Reserve = () => {
             <div>
               <h3 className="text-lg font-bold text-white">Reservation Confirmed!</h3>
               <p className="text-sm text-slate-300 mt-0.5">
-                We reserved Table #{bookingSuccess.tableId?.tableNumber || 'Selected'} for{' '}
+                We reserved {getTableClassValue(bookingSuccess.tableId) === 'vip_salons' ? 'VIP Table' : 'Table'} #{bookingSuccess.tableId?.displayTableNumber || bookingSuccess.tableId?.tableNumber || 'Selected'} for{' '}
                 <span className="text-amber-400 font-semibold">{bookingSuccess.guestCount} guests</span> on{' '}
                 <span className="text-white font-medium">{bookingSuccess.reservationDate}</span> at{' '}
                 <span className="text-white font-medium">{bookingSuccess.reservationTime}</span>.
               </p>
               <p className="text-xs text-slate-400 mt-1">Status: Pending manager verification</p>
+              {Number(bookingSuccess.reservationFee) > 0 && (
+                <p className="mt-1 text-xs font-semibold text-amber-300">
+                  Reservation fee: ₱{Number(bookingSuccess.reservationFee).toLocaleString('en-PH')}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
@@ -488,7 +538,9 @@ const Reserve = () => {
                 {bookingLoading
                   ? 'Confirming Reservation...'
                   : selectedTable
-                  ? `Book Table #${selectedTable.tableNumber} for ${guestCount} Guests`
+                  ? Number(selectedTable.reservationFee) > 0
+                    ? `Book ${getTableClassValue(selectedTable) === 'vip_salons' ? 'VIP Table' : 'Table'} #${getSectionTableNumber(selectedTable, allTables)} — ₱${Number(selectedTable.reservationFee).toLocaleString('en-PH')} Fee`
+                    : `Book ${getTableClassValue(selectedTable) === 'vip_salons' ? 'VIP Table' : 'Table'} #${getSectionTableNumber(selectedTable, allTables)} for ${guestCount} Guests`
                   : 'Select an Available Table to Book'}
               </button>
 
@@ -577,13 +629,19 @@ const Reserve = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {tables.map((table) => {
                     const isSelected = selectedTable?._id === table._id;
+                    const isVip = getTableClassValue(table) === 'vip_salons';
+                    const displayTableNumber = getSectionTableNumber(table, allTables);
                     return (
                       <div
                         key={table._id}
-                        onClick={() => setSelectedTable(table)}
-                        className={`cursor-pointer rounded-2xl p-5 border transition-all duration-200 relative ${
+                        onClick={() => setSelectedTable({ ...table, displayTableNumber })}
+                        className={`cursor-pointer rounded-2xl p-5 border transition-colors relative ${
                           isSelected
-                            ? 'bg-amber-500/10 border-amber-500 shadow-lg'
+                            ? isVip
+                              ? 'bg-[#21190d] border-amber-300'
+                              : 'bg-amber-500/10 border-amber-500 shadow-lg'
+                            : isVip
+                            ? 'bg-[#17130d] border-amber-500/60 hover:border-amber-300 hover:bg-[#1d170e]'
                             : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-950/80'
                         }`}
                       >
@@ -591,7 +649,7 @@ const Reserve = () => {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="text-lg font-bold text-white">
-                                Table #{table.tableNumber}
+                                {isVip ? 'VIP Table' : 'Table'} #{displayTableNumber}
                               </span>
                               {isSelected && (
                                 <span className="text-[10px] uppercase font-bold px-2 py-0.5 bg-amber-500 text-slate-950 rounded-full">
@@ -621,7 +679,13 @@ const Reserve = () => {
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                             Ready to Reserve
                           </span>
-                          <span className="text-amber-400/80">Click to Select</span>
+                          {Number(table.reservationFee) > 0 ? (
+                            <span className="font-semibold text-amber-300">
+                              ₱{Number(table.reservationFee).toLocaleString('en-PH')} fee
+                            </span>
+                          ) : (
+                            <span className="font-semibold text-emerald-400">Free reservation</span>
+                          )}
                         </div>
                       </div>
                     );
@@ -706,11 +770,11 @@ const Reserve = () => {
                       <div className="space-y-3">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-bold">
-                            #{res.tableId?.tableNumber || '?'}
+                            #{getSectionTableNumber(res.tableId, allTables) || '?'}
                           </div>
                           <div>
                             <h4 className="text-base font-bold text-white">
-                              Table #{res.tableId?.tableNumber || 'N/A'}
+                              {getTableClassValue(res.tableId) === 'vip_salons' ? 'VIP Table' : 'Table'} #{getSectionTableNumber(res.tableId, allTables) || 'N/A'}
                             </h4>
                             <p className="text-xs text-slate-400 flex items-center gap-1">
                               <Users className="w-3.5 h-3.5 text-amber-400" />
@@ -739,7 +803,7 @@ const Reserve = () => {
 
                     <div className="pt-3 border-t border-slate-800/80 flex items-center gap-2">
                       <button
-                        onClick={() => setViewingReceiptReservation(res)}
+                        onClick={() => setViewingReceiptReservation(withSectionTableNumber(res, allTables))}
                         className="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors border border-amber-500/20"
                       >
                         <Ticket className="w-3.5 h-3.5" />
